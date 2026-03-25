@@ -1,0 +1,24 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Automatically pulls your key from the .env file on your host machine
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # Crucial: The API must look for the Docker service name 'qdrant', not 'localhost'
+      - QDRANT_URL=http://qdrant:6333
+    depends_on:
+      - qdrant
+    # Handles the race condition: if API boots before Qdrant is ready, it safely restarts
+    restart: on-failure
+
+volumes:
+  qdrant_data:
